@@ -3154,19 +3154,15 @@ function plugins_url( $path = '', $plugin = '' ) {
 	$plugin = wp_normalize_path( $plugin );
 	$mu_plugin_dir = wp_normalize_path( WPMU_PLUGIN_DIR );
 
-	if ( !empty($plugin) && 0 === strpos($plugin, $mu_plugin_dir) )
-		$url = WPMU_PLUGIN_URL;
-	else
+	if ( !empty($plugin) && is_string($plugin) ) {
+		$folder = dirname(substr( $plugin, strlen(WP_CONTENT_DIR) ));
+		$url = WP_CONTENT_URL . $folder;
+	} else {
 		$url = WP_PLUGIN_URL;
+	}
 
 
 	$url = set_url_scheme( $url );
-
-	if ( !empty($plugin) && is_string($plugin) ) {
-		$folder = dirname(plugin_basename($plugin));
-		if ( '.' != $folder )
-			$url .= '/' . ltrim($folder, '/');
-	}
 
 	if ( $path && is_string( $path ) )
 		$url .= '/' . ltrim($path, '/');
