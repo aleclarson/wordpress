@@ -130,6 +130,62 @@ if ( $action ) {
 			wp_redirect( self_admin_url("plugins.php?activate-multi=true&plugin_status=$status&paged=$page&s=$s") );
 			exit;
 
+		case 'reactivate-selected':
+			if ( ! current_user_can('activate_plugins') )
+				wp_die(__('Sorry, you are not allowed to reactivate plugins for this site.'));
+
+			check_admin_referer('bulk-plugins');
+
+			$plugins = isset( $_POST['checked'] ) ? (array) wp_unslash( $_POST['checked'] ) : array();
+
+			foreach ( $plugins as $plugin ) {
+				// Only active plugins need deactivation.
+				if ( ! is_plugin_active( $plugin ) ) {
+					continue;
+				}
+				// Avoid deactivating multi-site plugins.
+				if ( ! is_network_admin() && is_plugin_active_for_network( $plugin ) ) {
+					continue;
+				}
+				// Check if the user can deactivate this plugin.
+				if ( current_user_can( 'deactivate_plugin', $plugin ) ) {
+					$result = deactivate_plugins( $plugin );
+					if ( is_wp_error( $result ) ) {
+						wp_die( $result, __('Failed to deactivate plugin') );
+					}
+				}
+			}
+
+			if ( ! is_network_admin() ) {
+				$recent = get_option( 'recently_activated' );
+			} else {
+				$recent = get_site_option( 'recently_activated' );
+			}
+
+			foreach ( $plugins as $i => $plugin ) {
+				// Check if the user can activate this plugin.
+				// Don't activate network-only plugins if on a multi-site.
+				if (
+					( ! current_user_can( 'activate_plugin', $plugin ) ) ||
+					( is_multisite() && is_network_only_plugin( $plugin ) )
+				) {
+					unset( $plugins[ $i ] );
+				} else {
+					unset( $recent[ $plugin ] );
+				}
+			}
+
+			activate_plugins( $plugins, self_admin_url('plugins.php?error=true'), is_network_admin() );
+
+			if ( ! is_network_admin() ) {
+				update_option( 'recently_activated', $recent );
+			} else {
+				update_site_option( 'recently_activated', $recent );
+			}
+
+			wp_redirect( self_admin_url("plugins.php?activate-multi=true&plugin_status=$status&paged=$page&s=$s") );
+			exit;
+
 		case 'update-selected' :
 
 			check_admin_referer( 'bulk-plugins' );

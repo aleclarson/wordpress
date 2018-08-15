@@ -456,6 +456,8 @@ class WP_Plugins_List_Table extends WP_List_Table {
 		if ( 'active' != $status )
 			$actions['activate-selected'] = $this->screen->in_admin( 'network' ) ? __( 'Network Activate' ) : __( 'Activate' );
 
+		$actions['reactivate-selected'] = $this->screen->in_admin( 'network' ) ? __( 'Network Re-Activate' ) : __( 'Re-Activate' );
+
 		if ( 'inactive' != $status && 'recent' != $status )
 			$actions['deactivate-selected'] = $this->screen->in_admin( 'network' ) ? __( 'Network Deactivate' ) : __( 'Deactivate' );
 
